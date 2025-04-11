@@ -56,16 +56,34 @@ npx tailwindcss init -p
 
 ### 🗂️ 2. 假名資料與聲音資源
 
-- [ ] 建立 `kanaData.ts`
+- [X] 建立 `kanaData.ts`
 ```ts
-export const kana = [
-  { kana: "あ", romaji: "a", sound: "/sounds/a.mp3" },
-  { kana: "い", romaji: "i", sound: "/sounds/i.mp3" },
-  ...
-]
+export type KanaItem = {
+  kana: string;
+  romaji: string;
+  sound: string;
+};
+
+export type KanaGroup = {
+  id: string;
+  name: string;
+  description: string;
+  items: KanaItem[];
+};
+
+// 平假名 - 基本母音（あいうえお）
+export const hiraganaBasicVowels: KanaGroup = {
+  id: 'hiragana-vowels',
+  name: '平假名 - 基本母音',
+  description: '最基本的五個平假名母音（あいうえお）',
+  items: [
+    { kana: 'あ', romaji: 'a', sound: '/sounds/hiragana/a.mp3' },
+    // ...更多假名
+  ],
+};
 ```
 
-- [ ] 將聲音檔放置於 `/public/sounds`
+- [X] 建立音效檔案目錄結構 `/public/sounds/hiragana` 和 `/public/sounds/katakana`
 
 ---
 
