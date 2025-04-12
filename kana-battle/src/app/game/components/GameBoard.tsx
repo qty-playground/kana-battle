@@ -32,8 +32,8 @@ export default function GameBoard() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50 dark:bg-gray-900">
-      <div className="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+    <div className="flex flex-col items-center justify-center min-h-screen p-2 sm:p-4 bg-gray-50 dark:bg-gray-900">
+      <div className="w-full max-w-full sm:max-w-3xl bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3 sm:p-6">
         {/* 關卡資訊 */}
         <LevelInfo 
           levelId={state.levelId} 
@@ -71,7 +71,7 @@ export default function GameBoard() {
       />
 
       {/* 回到首頁按鈕 */}
-      <div className="mt-8">
+      <div className="mt-4 sm:mt-8">
         <Link href="/" className="text-primary hover:underline">
           回到首頁
         </Link>
