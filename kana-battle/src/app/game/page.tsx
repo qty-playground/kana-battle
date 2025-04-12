@@ -30,6 +30,8 @@ function GameContent() {
     correct: boolean;
     time: number;
   }>>([]);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showToast, setShowToast] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const startTimeRef = useRef<number>(0);
@@ -168,12 +170,20 @@ function GameContent() {
     if (correct) {
       setScore(prev => prev + 1);
     }
-    
-    // 短暫延遲後進入下一題
-    setTimeout(() => {
-      setCurrentQuestion(prev => prev + 1);
-    }, 1000);
+
+    setToastMessage(correct ? '答對了！😊' : '答錯了！😢 正確答案是：' + kanaItems[currentQuestion].kana);
+    setShowToast(true);
+    setCurrentQuestion(prev => prev + 1);
   };
+
+  useEffect(() => {
+    if (showToast) {
+      setTimeout(() => {
+        setShowToast(false);
+        setToastMessage(null);
+      }, 1000);
+    }
+  }, [showToast]);
 
   if (isLoading) {
     return (
@@ -263,17 +273,14 @@ function GameContent() {
             </button>
           ))}
         </div>
-        
-        {/* 提示區 */}
-        {selectedOption && (
-          <div className={`text-center p-3 rounded-lg ${
-            isCorrect ? 'bg-green-100 text-success' : 'bg-red-100 text-error'
-          }`}>
-            {isCorrect ? '答對了！' : '答錯了！正確答案是：' + kanaItems[currentQuestion].kana}
+        {/* Toast Notification */}
+        {showToast && (
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-black text-white p-4 rounded-lg shadow-lg z-50">
+            {toastMessage}
           </div>
         )}
       </div>
-      
+
       {/* 回到首頁按鈕 */}
       <div className="mt-8">
         <Link href="/" className="text-primary hover:underline">
