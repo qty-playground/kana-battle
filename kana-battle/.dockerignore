@@ -1,0 +1,45 @@
+# 依賴相關
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.pnp.*
+.npm
+.yarn/
+
+# 測試相關
+/coverage
+.nyc_output
+
+# Next.js 相關
+.next/
+out/
+
+# 生產環境構建產物
+/build
+
+# 其他文件
+.DS_Store
+*.pem
+.env*
+!.env.example
+
+# IDE 相關
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Git 相關
+.git/
+.gitignore
+
+# Docker 相關
+Dockerfile
+.dockerignore
+
+# 文檔
+README.md
+LICENSE
+*.md

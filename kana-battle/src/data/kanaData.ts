@@ -574,7 +574,7 @@ export function getAllKanaGroups(): KanaGroup[] {
 }
 
 // 默認匯出所有資料
-export default {
+const kanaData = {
   // 平假名
   hiraganaBasicVowels,
   hiraganaKGroup,
@@ -612,3 +612,5 @@ export default {
   getKanaItemsFromLevel,
   getAllKanaGroups,
 };
+
+export default kanaData;

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { KanaItem, getKanaItemsFromLevel, gameLevels } from '@/data/kanaData';
 
-export default function GamePage() {
+// 分離出主要的遊戲組件
+function GameContent() {
   // 取得 URL 參數中的關卡 ID
   const searchParams = useSearchParams();
   const levelId = searchParams.get('level') || 'level-1'; // 預設關卡 1
@@ -64,7 +65,7 @@ export default function GamePage() {
   const [options, setOptions] = useState<string[]>([]);
   
   // 生成選項 (包含正確答案和干擾項)
-  const generateOptions = (correctKana: string) => {
+  const generateOptions = useRef((correctKana: string) => {
     const options = [correctKana];
     const allKana = Array.from(new Set(kanaItems.map(item => item.kana)));
     const otherKana = gameLevels.flatMap(level => 
@@ -94,7 +95,7 @@ export default function GamePage() {
     
     // 洗牌選項
     return options.sort(() => Math.random() - 0.5);
-  };
+  }).current;
 
   // 初始化題目和計時
   useEffect(() => {
@@ -116,7 +117,7 @@ export default function GamePage() {
       }));
       router.push('/result');
     }
-  }, [currentQuestion, isLoading, kanaItems]);
+  }, [currentQuestion, isLoading, kanaItems, generateOptions, score, levelId, currentLevel?.name, answerLog, router, totalQuestions]);
 
   // 播放音效
   const playSound = () => {
@@ -280,5 +281,20 @@ export default function GamePage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+// 使用 Suspense 包裝遊戲組件
+export default function GamePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-xl">載入中...</p>
+        </div>
+      </div>
+    }>
+      <GameContent />
+    </Suspense>
   );
 }
