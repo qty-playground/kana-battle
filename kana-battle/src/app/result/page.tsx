@@ -14,6 +14,8 @@ type GameResults = {
   score: number;
   answerLog: AnswerLog[];
   totalQuestions: number;
+  levelId: string; // 新增關卡ID
+  levelName: string; // 新增關卡名稱
 };
 
 export default function ResultPage() {
@@ -81,6 +83,7 @@ export default function ResultPage() {
           </div>
           <p className="text-xl dark:text-gray-300">正確率：{correctPercent.toFixed(1)}%</p>
           <p className="text-xl dark:text-gray-300">平均反應時間：{averageTime.toFixed(0)} 毫秒</p>
+          <p className="text-xl dark:text-gray-300 mt-2">關卡：{results.levelName}</p>
           
           <div className="mt-6 text-2xl">
             <span className="text-4xl mr-2">{encouragement.emoji}</span>
@@ -121,7 +124,7 @@ export default function ResultPage() {
         
         {/* 按鈕區 */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/game" className="px-6 py-3 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors text-center">
+          <Link href={`/game?level=${results.levelId}`} className="px-6 py-3 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors text-center">
             再玩一次
           </Link>
           <Link href="/" className="px-6 py-3 border border-primary text-primary rounded-full hover:bg-primary/10 transition-colors text-center">
