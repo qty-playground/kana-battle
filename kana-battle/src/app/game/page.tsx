@@ -2,9 +2,21 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { KanaItem, getKanaItemsFromLevel, gameLevels } from '@/data/kanaData';
 
 export default function GamePage() {
+  // 取得 URL 參數中的關卡 ID
+  const searchParams = useSearchParams();
+  const levelId = searchParams.get('level') || 'level-1'; // 預設關卡 1
+  
+  // 取得該關卡的假名資料
+  const [kanaItems, setKanaItems] = useState<KanaItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // 取得當前關卡資訊
+  const currentLevel = gameLevels.find(level => level.id === levelId);
+  
   // 遊戲狀態
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
@@ -22,25 +34,59 @@ export default function GamePage() {
   const startTimeRef = useRef<number>(0);
   const router = useRouter();
 
-  // 這裡之後會從資料檔案中匯入
-  const mockQuestions = [
-    { kana: "あ", romaji: "a", sound: "/sounds/a.mp3" },
-    { kana: "い", romaji: "i", sound: "/sounds/i.mp3" },
-    { kana: "う", romaji: "u", sound: "/sounds/u.mp3" },
-    { kana: "え", romaji: "e", sound: "/sounds/e.mp3" },
-    { kana: "お", romaji: "o", sound: "/sounds/o.mp3" },
-  ];
+  // 題目總數 (根據關卡難度調整)
+  const totalQuestions = 10;
+  
+  // 初始化關卡資料
+  useEffect(() => {
+    const loadLevelData = async () => {
+      // 取得該關卡的所有假名項目
+      const items = getKanaItemsFromLevel(levelId);
+      
+      // 如果沒有取得足夠的假名，轉到首頁
+      if (items.length === 0) {
+        router.push('/');
+        return;
+      }
+      
+      // 隨機抽取總題數的題目
+      const shuffled = [...items].sort(() => Math.random() - 0.5);
+      const selectedItems = shuffled.slice(0, totalQuestions);
+      
+      setKanaItems(selectedItems);
+      setIsLoading(false);
+    };
+    
+    loadLevelData();
+  }, [levelId, router]);
 
-  const totalQuestions = 5; // 遊戲題目總數
-
+  // 當前問題的選項
+  const [options, setOptions] = useState<string[]>([]);
+  
   // 生成選項 (包含正確答案和干擾項)
   const generateOptions = (correctKana: string) => {
     const options = [correctKana];
-    const allKana = mockQuestions.map(q => q.kana);
+    const allKana = Array.from(new Set(kanaItems.map(item => item.kana)));
+    const otherKana = gameLevels.flatMap(level => 
+      level.groups.flatMap(group => 
+        group.items.map(item => item.kana)
+      )
+    );
     
     // 從所有假名中選擇不同於正確答案的選項
-    while (options.length < 5) { // 生成5個選項
-      const randomKana = allKana[Math.floor(Math.random() * allKana.length)];
+    const optionCount = currentLevel?.difficulty === 'advanced' ? 9 : 
+                       currentLevel?.difficulty === 'intermediate' ? 7 : 5;
+                       
+    while (options.length < optionCount) {
+      // 優先從當前關卡選擇選項
+      let pool = allKana;
+      
+      // 如果當前關卡選項不足，則從全部假名中選擇
+      if (allKana.length < optionCount) {
+        pool = [...new Set([...allKana, ...otherKana])];
+      }
+      
+      const randomKana = pool[Math.floor(Math.random() * pool.length)];
       if (!options.includes(randomKana)) {
         options.push(randomKana);
       }
@@ -50,13 +96,12 @@ export default function GamePage() {
     return options.sort(() => Math.random() - 0.5);
   };
 
-  // 當前問題的選項
-  const [options, setOptions] = useState<string[]>([]);
-
   // 初始化題目和計時
   useEffect(() => {
-    if (currentQuestion < totalQuestions) {
-      setOptions(generateOptions(mockQuestions[currentQuestion].kana));
+    if (isLoading) return;
+    
+    if (currentQuestion < Math.min(kanaItems.length, totalQuestions)) {
+      setOptions(generateOptions(kanaItems[currentQuestion].kana));
       startTimeRef.current = performance.now();
       setSelectedOption(null);
       setIsCorrect(null);
@@ -64,25 +109,46 @@ export default function GamePage() {
       // 遊戲結束時儲存結果並前往結果頁面
       localStorage.setItem('gameResults', JSON.stringify({
         score,
+        levelId,
+        levelName: currentLevel?.name || '未知關卡',
         answerLog,
-        totalQuestions
+        totalQuestions: Math.min(kanaItems.length, totalQuestions)
       }));
       router.push('/result');
     }
-  }, [currentQuestion]);
+  }, [currentQuestion, isLoading, kanaItems]);
 
   // 播放音效
   const playSound = () => {
-    // 實際應用時這裡會播放真正的聲音檔，目前只是模擬
+    if (isLoading || !kanaItems[currentQuestion]) return;
+    
+    // 使用Audio API播放音檔
+    const soundPath = kanaItems[currentQuestion].sound;
+    if (!audioRef.current) {
+      audioRef.current = new Audio(soundPath);
+    } else {
+      audioRef.current.src = soundPath;
+    }
+    
     setIsAudioPlaying(true);
-    setTimeout(() => {
-      setIsAudioPlaying(false);
-    }, 1000);
+    
+    audioRef.current.play()
+      .then(() => {
+        // 播放成功
+      })
+      .catch(error => {
+        console.error('播放音檔失敗:', error);
+      })
+      .finally(() => {
+        setTimeout(() => {
+          setIsAudioPlaying(false);
+        }, 1000);
+      });
   };
 
   // 檢查答案
   const checkAnswer = (selected: string) => {
-    const correct = selected === mockQuestions[currentQuestion].kana;
+    const correct = selected === kanaItems[currentQuestion].kana;
     const endTime = performance.now();
     const reactionTime = endTime - startTimeRef.current;
     
@@ -91,7 +157,7 @@ export default function GamePage() {
     
     // 記錄答題數據
     setAnswerLog(prev => [...prev, {
-      kana: mockQuestions[currentQuestion].kana,
+      kana: kanaItems[currentQuestion].kana,
       selected,
       correct,
       time: reactionTime
@@ -108,7 +174,17 @@ export default function GamePage() {
     }, 1000);
   };
 
-  if (currentQuestion >= totalQuestions) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-xl">載入關卡中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentQuestion >= Math.min(kanaItems.length, totalQuestions)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -121,10 +197,20 @@ export default function GamePage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        {/* 關卡資訊 */}
+        <div className="text-center mb-4">
+          <h1 className="text-2xl font-bold dark:text-white">
+            {currentLevel?.name || '未知關卡'} (ID: {levelId})
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300 text-sm">
+            {currentLevel?.description || ''}
+          </p>
+        </div>
+        
         {/* 遊戲資訊 */}
         <div className="flex justify-between mb-6">
           <div className="text-lg font-medium">
-            問題 {currentQuestion + 1} / {totalQuestions}
+            問題 {currentQuestion + 1} / {Math.min(kanaItems.length, totalQuestions)}
           </div>
           <div className="text-lg font-medium">
             分數: <span className="text-primary">{score}</span>
@@ -139,7 +225,7 @@ export default function GamePage() {
           
           <div className="mb-6">
             <div className="text-4xl font-bold text-primary">
-              {mockQuestions[currentQuestion].romaji}
+              {kanaItems[currentQuestion].romaji}
             </div>
           </div>
           
@@ -167,7 +253,7 @@ export default function GamePage() {
                       : 'bg-error text-white')
                   : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white'
                 }
-                ${selectedOption !== null && option === mockQuestions[currentQuestion].kana && !isCorrect 
+                ${selectedOption !== null && option === kanaItems[currentQuestion].kana && !isCorrect 
                   ? 'ring-4 ring-success' 
                   : ''}
               `}
@@ -182,7 +268,7 @@ export default function GamePage() {
           <div className={`text-center p-3 rounded-lg ${
             isCorrect ? 'bg-green-100 text-success' : 'bg-red-100 text-error'
           }`}>
-            {isCorrect ? '答對了！' : '答錯了！正確答案是：' + mockQuestions[currentQuestion].kana}
+            {isCorrect ? '答對了！' : '答錯了！正確答案是：' + kanaItems[currentQuestion].kana}
           </div>
         )}
       </div>
