@@ -16,6 +16,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "🇯🇵 假名大作戰",
   description: "五十音互動學習遊戲｜透過遊戲化方式快速記憶日語假名，提升反應速度與聽力辨識能力",
+  openGraph: {
+    title: "🇯🇵 假名大作戰 | 日文五十音互動學習",
+    description: "五十音互動學習遊戲｜透過遊戲化方式快速記憶日語假名，提升反應速度與聽力辨識能力",
+    type: "website",
+    locale: "zh_TW",
+    url: "https://kana.qrtt1.io/",
+    siteName: "假名大作戰",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "假名大作戰 | 日文五十音互動學習遊戲",
+    description: "五十音互動學習遊戲｜透過遊戲化方式快速記憶日語假名，提升反應速度與聽力辨識能力",
+  },
 };
 
 export default function RootLayout({
