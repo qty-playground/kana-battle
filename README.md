@@ -1,7 +1,7 @@
 # 🎌 Kana Battle｜五十音互動學習遊戲
 
 > [!NOTE]  
-> [Demo Web](https://kana-battle-464419571270.asia-east1.run.app/)
+> [Demo Web](https://kana.qrtt1.io/)
 > 這是一個 Vibe Coding 的實驗專案
 
 
